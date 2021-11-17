@@ -1,0 +1,10 @@
+insert into tipo_atencion (nombre,status) values ('PREOCUPACIONAL', 1)
+insert into tipo_atencion (nombre,status) values ('PERIÓDICO', 1)
+insert into tipo_atencion (nombre,status) values ('MINA', 1)
+insert into tipo_atencion (nombre,status) values ('SOLO PRUEBA COVID', 1)
+insert into tipo_atencion (nombre,status) values ('LEVANTAMIENTO DE OBSERVACIÓN', 1)
+insert into tipo_atencion (nombre,status) values ('MTC / MOTO', 1)
+insert into tipo_atencion (nombre,status) values ('EXAMEN MÉDICO ESPECIAL', 1)
+
+insert into tipo_usuario (nombre, status) values ('PERSONA',1)
+insert into tipo_usuario (nombre, status) values ('EMPRESA',1)
