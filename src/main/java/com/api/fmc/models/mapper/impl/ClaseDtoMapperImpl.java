@@ -80,6 +80,7 @@ public class ClaseDtoMapperImpl implements IClaseDtoMapper{
 		cita.setStatus(src.getStatus());
 		cita.setTipo_atencion(src.getTipoAtencion().getNombre());
 		cita.setTipo_usuario(src.getTipoUsuario().getNombre());
+		cita.setDocument(src.getDocument());
 		return cita;
 	}
 

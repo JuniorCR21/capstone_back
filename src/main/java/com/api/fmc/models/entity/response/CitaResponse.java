@@ -20,4 +20,5 @@ public class CitaResponse {
 	private String responsable;
 	private String comentario;
 	private String status;
+	private String document;
 }

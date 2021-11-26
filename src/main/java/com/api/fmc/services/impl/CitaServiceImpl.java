@@ -1,5 +1,6 @@
 package com.api.fmc.services.impl;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -7,6 +8,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.api.fmc.exceptions.CitaException;
 import com.api.fmc.models.entity.Cita;
@@ -16,7 +18,6 @@ import com.api.fmc.models.entity.TipoUsuario;
 import com.api.fmc.models.entity.request.CitaRequest;
 import com.api.fmc.models.entity.response.CitaResponse;
 import com.api.fmc.models.mapper.IClaseDtoMapper;
-import com.api.fmc.models.mapper.IClaseResourceMapper;
 import com.api.fmc.models.repository.ICitaDao;
 import com.api.fmc.models.repository.IPerfilDao;
 import com.api.fmc.models.repository.ITipoAtencionDao;
@@ -34,9 +35,6 @@ public class CitaServiceImpl implements ICitaService{
 	private IPerfilDao perfilDao;
 	
 	@Autowired
-	private IClaseResourceMapper resourceMapper;
-	
-	@Autowired
 	private ITipoAtencionDao atencionDao;
 	
 	@Autowired
@@ -44,6 +42,11 @@ public class CitaServiceImpl implements ICitaService{
 	
 	@Autowired
 	private IClaseDtoMapper dtoMapper;
+	
+	@Autowired
+	private FTPClientService ftpCliente;
+	
+	private static final String FOLDER = "documents/";
 	
 	@Transactional(readOnly = true)
 	@Override
@@ -73,7 +76,7 @@ public class CitaServiceImpl implements ICitaService{
 		cita.setPerfil(perfil.get());
 		cita.setTipoAtencion(tipoAtencion.get());
 		cita.setTipoUsuario(tipoUsuario.get());
-		cita.setStatus("REGISTRADO");
+		cita.setStatus("REGISTRADA");
 		cita.setPruebaCovid(body.getPrueba_covid());
 		cita.setResponsable(body.getResponsable());
 		return dtoMapper.asCitaDto(citaDao.save(cita));
@@ -88,6 +91,51 @@ public class CitaServiceImpl implements ICitaService{
 	@Override
 	public List<CitaResponse> findAllByPerfil(Long id) {
 		List<Cita> citas= citaDao.findAllByPerfil(id);
+		if(citas.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return dtoMapper.asCitasDto(citas);
+	}
+
+	@Transactional
+	@Override
+	public CitaResponse cancelCita(Long id) throws CitaException {
+		Cita cita = citaDao.findById(id).orElse(null);
+		if(cita == null) {
+			throw new CitaException(Constants.CITA_NOT_FOUND);
+		}
+		cita.setStatus("CANCELADA");
+		return dtoMapper.asCitaDto(citaDao.save(cita));
+	}
+	
+	@Transactional
+	@Override
+	public List<CitaResponse> findAllPastByPerfil(Long id) {
+		List<Cita> citas= citaDao.findAllPastByPerfil(id);
+		if(citas.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return dtoMapper.asCitasDto(citas);
+	}
+
+	@Transactional
+	@Override
+	public CitaResponse attendCita(MultipartFile multipart, Long id) {
+		Cita cita = citaDao.findById(id).orElse(null);
+		try {
+			cita.setDocument(ftpCliente.uploadDocument(multipart, FOLDER + cita.getId() + "-" + cita.getPerfil().getApellidoPaterno() + cita.getPerfil().getApellidoMaterno() + "_" + cita.getFecha().toString()+".pdf"));
+			cita.setStatus("ATENDIDA");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return dtoMapper.asCitaDto(citaDao.save(cita));
+	}
+
+	@Transactional(readOnly = true)
+	@Override
+	public List<?> attendCitaPerfil(Long id) {
+		List<Cita> citas = citaDao.findAllAttendByPerfil(id);
 		if(citas.isEmpty()) {
 			return Collections.emptyList();
 		}
